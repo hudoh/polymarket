@@ -1,65 +1,124 @@
-import Image from "next/image";
+'use client'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Market } from '@/lib/types'
+import { OUTCOME_COLORS } from '@/lib/constants'
 
-export default function Home() {
+function formatDollars(n: number): string {
+  return '$' + (n / 1_000_000).toFixed(2) + 'M'
+}
+
+function timeLeft(closeDate: string): string {
+  const diff = new Date(closeDate).getTime() - Date.now()
+  if (diff < 0) return 'Closed'
+  const days = Math.floor(diff / 86400000)
+  if (days > 0) return `${days}d left`
+  const hrs = Math.floor(diff / 3600000)
+  if (hrs > 0) return `${hrs}h left`
+  const mins = Math.floor(diff / 60000)
+  return `${mins}m left`
+}
+
+function ProbabilityBar({ probabilities }: { probabilities: number[] }) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
+      {probabilities.map((p, i) => (
+        <div
+          key={i}
+          style={{ width: `${Math.max(p * 100, 1)}%`, backgroundColor: OUTCOME_COLORS[i % OUTCOME_COLORS.length] }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      ))}
     </div>
-  );
+  )
+}
+
+export default function HomePage() {
+  const [markets, setMarkets] = useState<Market[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/markets')
+      .then((r) => r.json())
+      .then((d) => { setMarkets(d.markets || []); setLoading(false) })
+  }, [])
+
+  const open = markets.filter((m) => !m.resolved)
+  const resolved = markets.filter((m) => m.resolved)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Prediction Markets</h1>
+          <p className="text-slate-400 text-sm mt-1">Ask questions. Take positions. Settle for truth.</p>
+        </div>
+        <Link href="/admin" className="text-sm bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-semibold hover:bg-amber-400 transition">
+          + New Market
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="text-slate-400 py-12 text-center">Loading markets...</div>
+      ) : (
+        <>
+          <section className="mb-8">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Open Markets</h2>
+            {open.length === 0 ? (
+              <div className="text-slate-500 py-8 text-center border border-dashed border-slate-800 rounded-xl">
+                No open markets yet. Create one!
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {open.map((m) => (
+                  <Link key={m.id} href={`/markets/${m.id}`} className="block">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="font-semibold text-base leading-snug">{m.question}</h3>
+                        <span className={`text-xs px-2 py-1 rounded-full ml-3 shrink-0 ${m.resolved ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                          {m.resolved ? 'Resolved' : timeLeft(m.close_date)}
+                        </span>
+                      </div>
+                      <div className="mb-3">
+                        <ProbabilityBar probabilities={(m as any).probabilities || new Array(m.outcomes.length).fill(1 / m.outcomes.length)} />
+                      </div>
+                      <div className="flex gap-3 text-xs text-slate-400">
+                        {m.outcomes.slice(0, 4).map((o, i) => (
+                          <span key={i} style={{ color: OUTCOME_COLORS[i % OUTCOME_COLORS.length] }}>
+                            {o}: {(((m as any).probabilities?.[i] || 0.5) * 100).toFixed(0)}%
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {formatDollars((m as any).volume || 0)} traded · {(m as any).trader_count || 0} traders
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {resolved.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Resolved</h2>
+              <div className="space-y-2">
+                {resolved.map((m) => (
+                  <Link key={m.id} href={`/markets/${m.id}`}>
+                    <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700 transition opacity-70">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{m.question}</span>
+                        <span className="text-xs text-green-400">
+                          ✓ {m.outcomes[m.winning_outcome || 0]}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  )
 }
