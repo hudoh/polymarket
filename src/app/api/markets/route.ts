@@ -79,6 +79,35 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
+    // Find or create protocol user for AMM seeding
+    let { data: protocolUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('is_protocol', true)
+      .single()
+
+    if (!protocolUser) {
+      const { data: newUser, error: userErr } = await supabase
+        .from('users')
+        .insert({ username: 'protocol', email: 'protocol@polymarket.app', password_hash: 'protocol', fake_balance: 0, is_protocol: true })
+        .select('id')
+        .single()
+      if (userErr) throw userErr
+      protocolUser = newUser
+    }
+
+    // Seed 1 share of each outcome at $1 (equal probability)
+    const seedPositions = outcomes.map((_: string, i: number) => ({
+      user_id: protocolUser!.id,
+      market_id: market.id,
+      outcome_index: i,
+      shares: 1,
+      avg_price: 1,
+    }))
+
+    const { error: seedErr } = await supabase.from('positions').insert(seedPositions)
+    if (seedErr) throw seedErr
+
     return NextResponse.json({ market })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to create market'
