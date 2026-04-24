@@ -38,7 +38,7 @@ export default function PortfolioPage() {
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
           <div className="text-sm text-slate-400 mb-1">Active Positions</div>
-          <div className="text-2xl font-bold">{positions.filter((p: any) => !p.markets?.resolved).length}</div>
+          <div className="text-2xl font-bold text-white">{positions.filter((p: any) => !p.markets?.resolved).length}</div>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
           <div className="text-sm text-slate-400 mb-1">Resolved P&L</div>
@@ -58,10 +58,10 @@ export default function PortfolioPage() {
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition">
                 <div className="font-medium mb-1">{p.markets?.question}</div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className={p.markets?.resolved && p.markets?.winning_outcome === p.outcome_index ? 'text-green-400' : 'text-slate-400'}>
+                  <span className={p.markets?.resolved && p.markets?.winning_outcome === p.outcome_index ? 'text-green-400' : 'text-white'}>
                     {p.markets?.outcomes?.[p.outcome_index]}
                   </span>
-                  <span className="text-slate-400">{Number(p.shares).toLocaleString()} shares @ ${Number(p.avg_price).toFixed(4)}</span>
+                  <span className="text-slate-300">{Number(p.shares).toLocaleString()} shares @ <span className="text-amber-400">${Number(p.avg_price).toFixed(4)}</span></span>
                 </div>
                 {p.markets?.resolved && (
                   <div className="mt-1 text-xs">
