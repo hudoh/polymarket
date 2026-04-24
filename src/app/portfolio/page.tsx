@@ -56,12 +56,12 @@ export default function PortfolioPage() {
           {positions.map((p: any) => (
             <Link key={p.id} href={`/markets/${p.market_id}`}>
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition">
-                <div className="font-medium mb-1">{p.markets?.question}</div>
+                <div className="font-medium mb-1 text-white">{p.markets?.question}</div>
                 <div className="flex items-center justify-between text-sm">
                   <span className={p.markets?.resolved && p.markets?.winning_outcome === p.outcome_index ? 'text-green-400' : 'text-white'}>
                     {p.markets?.outcomes?.[p.outcome_index]}
                   </span>
-                  <span className="text-slate-300">{Number(p.shares).toLocaleString()} shares @ <span className="text-amber-400">${Number(p.avg_price).toFixed(4)}</span></span>
+                  <span className="text-slate-200">{Number(p.shares).toLocaleString()} shares @ <span className="text-amber-400">${Number(p.avg_price).toFixed(4)}</span></span>
                 </div>
                 {p.markets?.resolved && (
                   <div className="mt-1 text-xs">
