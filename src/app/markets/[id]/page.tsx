@@ -73,10 +73,10 @@ export default function MarketPage() {
       </div>
 
       {user && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6 flex items-center justify-between">
           <div>
-            <span className="text-sm text-slate-400">Your balance</span>
-            <div className="text-xl font-bold text-amber-400">${(balance / 1_000_000).toFixed(2)}M</div>
+            <span className="text-sm text-slate-300">Your balance</span>
+            <div className="text-xl font-bold text-amber-400">${typeof balance === 'number' ? (balance / 1_000_000).toFixed(2) + 'M' : balance}</div>
           </div>
           {error && <div className="text-red-400 text-sm">{error}</div>}
         </div>
@@ -106,20 +106,20 @@ export default function MarketPage() {
               </div>
 
               {!market.resolved && user && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input
                     type="number"
                     placeholder="Shares"
                     value={amount[i] || ''}
                     onChange={(e) => setAmount({ ...amount, [i]: Number(e.target.value) })}
-                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:border-amber-500"
+                    className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm w-36 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500"
                   />
-                  <span className="text-xs text-slate-500">
-                    Cost: ${((amount[i] || 0) * prob).toFixed(0)}
+                  <span className="text-sm text-slate-200 min-w-[80px]">
+                    Cost: ${isNaN((amount[i] || 0) * prob) ? '—' : ((amount[i] || 0) * prob).toFixed(0)}
                   </span>
                   <button
                     onClick={() => placeBet(i, 'buy')}
-                    className="text-sm bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded-lg transition"
+                    className="text-sm bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-5 py-2 rounded-lg transition"
                   >
                     Buy
                   </button>

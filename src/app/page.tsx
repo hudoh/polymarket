@@ -8,15 +8,16 @@ function formatDollars(n: number): string {
   return '$' + (n / 1_000_000).toFixed(2) + 'M'
 }
 
-function timeLeft(closeDate: string): string {
+function timeLeft(closeDate: string | null): string {
+  if (!closeDate) return 'No deadline'
   const diff = new Date(closeDate).getTime() - Date.now()
-  if (diff < 0) return 'Closed'
+  if (isNaN(diff) || diff < 0) return 'Closed'
   const days = Math.floor(diff / 86400000)
-  if (days > 0) return `${days}d left`
+  if (days > 0) return `${days}d`
   const hrs = Math.floor(diff / 3600000)
-  if (hrs > 0) return `${hrs}h left`
+  if (hrs > 0) return `${hrs}h`
   const mins = Math.floor(diff / 60000)
-  return `${mins}m left`
+  return `${mins}m`
 }
 
 function ProbabilityBar({ probabilities }: { probabilities: number[] }) {
@@ -73,9 +74,9 @@ export default function HomePage() {
                   <Link key={m.id} href={`/markets/${m.id}`} className="block">
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-base leading-snug">{m.question}</h3>
+                        <h3 className="font-bold text-lg leading-snug text-white">{m.question}</h3>
                         <span className={`text-xs px-2 py-1 rounded-full ml-3 shrink-0 ${m.resolved ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                          {m.resolved ? 'Resolved' : timeLeft(m.close_date)}
+                          {m.resolved ? 'Resolved ✅' : timeLeft(m.close_date)}
                         </span>
                       </div>
                       <div className="mb-3">
