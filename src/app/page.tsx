@@ -81,14 +81,14 @@ export default function HomePage() {
                       <div className="mb-3">
                         <ProbabilityBar probabilities={(m as any).probabilities || new Array(m.outcomes.length).fill(1 / m.outcomes.length)} />
                       </div>
-                      <div className="flex gap-3 text-xs text-slate-400">
+                      <div className="flex gap-4 text-sm font-semibold">
                         {m.outcomes.slice(0, 4).map((o, i) => (
                           <span key={i} style={{ color: OUTCOME_COLORS[i % OUTCOME_COLORS.length] }}>
-                            {o}: {(((m as any).probabilities?.[i] || 0.5) * 100).toFixed(0)}%
+                            {o} {( ((m as any).probabilities?.[i] || 0.5) * 100).toFixed(0)}%
                           </span>
                         ))}
                       </div>
-                      <div className="mt-2 text-xs text-slate-500">
+                      <div className="mt-2 text-xs text-slate-400">
                         {formatDollars((m as any).volume || 0)} traded · {(m as any).trader_count || 0} traders
                       </div>
                     </div>

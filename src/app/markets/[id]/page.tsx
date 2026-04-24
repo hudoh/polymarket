@@ -89,21 +89,19 @@ export default function MarketPage() {
           const color = OUTCOME_COLORS[i % OUTCOME_COLORS.length]
           return (
             <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="font-medium">{outcome}</span>
-                  {market.resolved && market.winning_outcome === i && <span className="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded">WINNER</span>}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="font-semibold text-base text-white">{outcome}</span>
+                  {market.resolved && market.winning_outcome === i && <span className="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded font-medium">WINNER</span>}
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-bold" style={{ color }}>{(prob * 100).toFixed(1)}%</div>
-                  <div className="text-xs text-slate-500">
-                    {myPos > 0 ? `You own ${myPos.toLocaleString()} shares` : ''}
-                  </div>
+                  <div className="text-2xl font-bold" style={{ color }}>{(prob * 100).toFixed(0)}%</div>
+                  {myPos > 0 && <div className="text-xs text-slate-400">{myPos.toLocaleString()} shares</div>}
                 </div>
               </div>
 
-              <div className="h-2 rounded-full overflow-hidden bg-slate-800 mb-4">
+              <div className="h-3 rounded-full overflow-hidden bg-slate-700 mb-4">
                 <div className="h-full rounded-full transition-all" style={{ width: `${prob * 100}%`, backgroundColor: color }} />
               </div>
 
