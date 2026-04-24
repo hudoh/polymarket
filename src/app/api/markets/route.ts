@@ -11,7 +11,19 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Get positions count per market
+  // Get all positions with market_id for probability computation
+  const { data: allPositions } = await supabase
+    .from('positions')
+    .select('market_id, outcome_index, shares, avg_price')
+    .gt('shares', 0)
+
+  // Build a map of market_id -> positions
+  const positionsByMarket: Record<string, any[]> = {}
+  ;(allPositions || []).forEach((p) => {
+    if (!positionsByMarket[p.market_id]) positionsByMarket[p.market_id] = []
+    positionsByMarket[p.market_id].push(p)
+  })
+
   const marketsWithMeta = await Promise.all(
     (markets || []).map(async (m) => {
       const { count } = await supabase
@@ -19,9 +31,19 @@ export async function GET(req: NextRequest) {
         .select('*', { count: 'exact', head: true })
         .eq('market_id', m.id)
 
+      // Compute probabilities AMM-style
+      const positions = positionsByMarket[m.id] || []
+      const outcomeVolumes = new Array(m.outcomes.length).fill(0)
+      positions.forEach((p: any) => {
+        outcomeVolumes[p.outcome_index] += Number(p.shares) * Number(p.avg_price)
+      })
+      const totalVolume = outcomeVolumes.reduce((a: number, b: number) => a + b, 0) || 1
+      const probabilities = outcomeVolumes.map((v: number) => v / totalVolume)
+
       return {
         ...m,
         trader_count: count || 0,
+        probabilities,
       }
     })
   )

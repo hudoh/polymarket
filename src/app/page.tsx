@@ -83,7 +83,7 @@ export default function HomePage() {
                         <ProbabilityBar probabilities={(m as any).probabilities ?? new Array(m.outcomes.length).fill(1 / m.outcomes.length)} />
                       </div>
                       <div className="flex gap-4 text-sm font-semibold">
-                        {m.outcomes.slice(0, 4).map((o, i) => (
+                        {m.outcomes.map((o, i) => (
                           <span key={i} style={{ color: OUTCOME_COLORS[i % OUTCOME_COLORS.length] }}>
                             {o} {( ((m as any).probabilities?.[i] ?? 0.5) * 100).toFixed(0)}%
                           </span>
