@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
 
     if (amount <= 0) return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
 
+    const MAX_BID = 1_000_000
+    if (side === 'buy' && amount > MAX_BID) {
+      return NextResponse.json({ error: `Max bid is $${MAX_BID.toLocaleString()}. Those knee caps are non-negotiable.` }, { status: 400 })
+    }
+
     // Get market
     const { data: market } = await supabase
       .from('markets')
