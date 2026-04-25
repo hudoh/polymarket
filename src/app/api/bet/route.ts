@@ -62,15 +62,12 @@ export async function POST(req: NextRequest) {
     let cost: number
 
     if (side === 'buy') {
-      // Calculate shares based on AMM curve
-      // price = (current_shares + new_shares) / (2 * base_liquidity)
-      // Solve for new_shares: new_shares = 2 * base_liquidity * price - current_shares
-      // Simplified: use amount as number of shares to buy at current price
-      shares = Math.floor(amount / Math.max(currentAvgPrice, 0.01))
-      cost = shares * currentAvgPrice
+      // amount = dollars to spend
+      cost = amount
+      shares = Math.floor(cost / Math.max(currentAvgPrice, 0.01))
 
       if (cost > user.fake_balance) {
-        return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
+        return NextResponse.json({ error: `Insufficient balance. You have $${user.fake_balance.toLocaleString()} but this bet costs $${cost.toLocaleString()}.` }, { status: 400 })
       }
 
       // New average price

@@ -36,23 +36,30 @@ export default function MarketPage() {
 
   async function placeBet(outcomeIndex: number, side: 'buy' = 'buy') {
     if (!token) { setError('Login required'); return }
-    const amt = amount[outcomeIndex] || 0
-    if (amt <= 0) return
+    const shares = amount[outcomeIndex] || 0
+    if (shares <= 0) return
 
     setError('')
     const res = await fetch('/api/bet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ market_id: id, outcome_index: outcomeIndex, amount: amt, side }),
+      body: JSON.stringify({ market_id: id, outcome_index: outcomeIndex, amount: shares, side }),
     })
     const d = await res.json()
     if (d.error) { setError(d.error); return }
-    setBalance(d.balance)
-    // Refresh market data
-    const updated = await fetch(`/api/markets/${id}`).then((r) => r.json())
-    setMarket(updated.market)
-    setPositions(updated.positions || [])
-    setProbs(updated.probabilities || [])
+
+    // Refresh balance and market data
+    const [betRes, marketRes, balanceRes] = await Promise.all([
+      Promise.resolve(d),
+      fetch(`/api/markets/${id}`).then((r) => r.json()),
+      fetch('/api/portfolio', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
+    ])
+
+    setBalance(balanceRes.user?.fake_balance || 0)
+    setMarket(marketRes.market)
+    setPositions(marketRes.positions || [])
+    setProbs(marketRes.probabilities || [])
+    setAmount({ ...amount, [outcomeIndex]: 0 }) // clear input
   }
 
   if (loading) return <div className="text-slate-400 py-12">Loading...</div>
@@ -109,13 +116,13 @@ export default function MarketPage() {
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
-                    placeholder="Shares"
+                    placeholder="$ to spend"
                     value={amount[i] || ''}
                     onChange={(e) => setAmount({ ...amount, [i]: Number(e.target.value) })}
                     className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm w-36 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500"
                   />
                   <span className="text-sm text-slate-200 min-w-[80px]">
-                    Cost: ${isNaN((amount[i] || 0) * prob) ? '—' : ((amount[i] || 0) * prob).toFixed(0)}
+                    Shares: {isNaN((amount[i] || 0) / Math.max(prob, 0.01)) ? '—' : Math.floor((amount[i] || 0) / prob).toLocaleString()}
                   </span>
                   <button
                     onClick={() => placeBet(i, 'buy')}
