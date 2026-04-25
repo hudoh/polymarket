@@ -20,8 +20,29 @@ export async function POST(req: NextRequest) {
     if (amount <= 0) return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
 
     const MAX_BID = 1_000_000
-    if (side === 'buy' && amount > MAX_BID) {
-      return NextResponse.json({ error: `Max bid is $${MAX_BID.toLocaleString()}. Those knee caps are non-negotiable.` }, { status: 400 })
+
+    // Get user
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', auth.userId)
+      .single()
+
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    if (side === 'buy') {
+      // Check user's total exposure across all markets
+      const { data: allPositions } = await supabase
+        .from('positions')
+        .select('shares, avg_price')
+        .eq('user_id', auth.userId)
+
+      const totalSpent = (allPositions || []).reduce((acc: number, p: any) => acc + Number(p.shares) * Number(p.avg_price), 0)
+
+      if (totalSpent + amount > MAX_BID) {
+        const remaining = MAX_BID - totalSpent
+        return NextResponse.json({ error: `Max total bid is $${MAX_BID.toLocaleString()} per user. You have $${remaining.toLocaleString()} remaining. Those knee caps are non-negotiable.` }, { status: 400 })
+      }
     }
 
     // Get market
@@ -38,14 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user
-    const { data: user } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', auth.userId)
-      .single()
-
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-
+    // (fetched above for the max-bid check)
     // Calculate cost (AMM buy)
     // We use a simple model: shares = amount / price
     // For simplicity, treat amount as fake $ cost, price as probability 0-1
