@@ -7,6 +7,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotMsg, setForgotMsg] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
   const router = useRouter()
 
   async function handleLogin(e: React.FormEvent) {
@@ -26,8 +30,59 @@ export default function LoginPage() {
     } catch { setError('Login failed'); setLoading(false) }
   }
 
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault()
+    setForgotLoading(true)
+    setForgotMsg('')
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: forgotEmail }),
+    })
+    const d = await res.json()
+    setForgotLoading(false)
+    setForgotMsg(d.message || d.error)
+  }
+
   return (
     <div className="max-w-md mx-auto mt-16">
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-white mb-4">Reset Password</h2>
+            <p className="text-slate-400 text-sm mb-4">Enter your email and we'll send you a reset link.</p>
+            <form onSubmit={handleForgot} className="space-y-3">
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-500"
+                placeholder="your@email.com"
+                required
+              />
+              {forgotMsg && <div className="text-slate-300 text-sm bg-slate-800 px-4 py-3 rounded-lg">{forgotMsg}</div>}
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="flex-1 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-900 font-bold py-3 rounded-lg transition"
+                >
+                  {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgot(false); setForgotMsg('') }}
+                  className="px-4 py-3 text-slate-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-6 text-center">Login to Polymarket</h1>
       <form onSubmit={handleLogin} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
         <div>
@@ -47,6 +102,8 @@ export default function LoginPage() {
         </button>
         <div className="text-center text-sm text-slate-400">
           No account? <a href="/register" className="text-amber-400 hover:underline">Register</a>
+          <span className="mx-2">·</span>
+          <button type="button" onClick={() => setShowForgot(true)} className="text-slate-400 hover:text-amber-400 transition">Forgot password?</button>
         </div>
       </form>
     </div>
