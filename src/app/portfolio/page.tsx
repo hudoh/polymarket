@@ -5,6 +5,7 @@ import Link from 'next/link'
 export default function PortfolioPage() {
   const [user, setUser] = useState<any>(null)
   const [positions, setPositions] = useState<any[]>([])
+  const [debts, setDebts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [requesting, setRequesting] = useState(false)
@@ -15,6 +16,11 @@ export default function PortfolioPage() {
     fetch('/api/portfolio', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((d) => { setUser(d.user); setPositions(d.positions || []); setLoading(false) })
+
+    // Fetch debts
+    fetch('/api/debts', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((d) => { setDebts(d.debts || []) })
   }, [])
 
   async function requestFunds() {
@@ -116,6 +122,32 @@ export default function PortfolioPage() {
           <div className="text-2xl font-bold text-green-400">{totalValue.toLocaleString()}</div>
         </div>
       </div>
+
+      {debts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3 text-red-400">⚠️ Your Debts</h2>
+          <div className="space-y-2">
+            {debts.map((d: any) => {
+              const monthsOwed = Math.max(0, Math.floor((Date.now() - new Date(d.created_at).getTime()) / (30 * 24 * 60 * 60 * 1000)))
+              const owed = d.amount * Math.pow(1 + d.rate_monthly_percent / 100, monthsOwed)
+              return (
+                <div key={d.id} className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-white font-semibold">${(d.amount / 1_000_000).toFixed(2)}M</span>
+                      <span className="text-slate-400 text-sm ml-2">owed to {d.creditor_name}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-red-400 font-bold">${owed.toLocaleString()}</div>
+                      <div className="text-slate-500 text-xs">{d.rate_monthly_percent}%/mo · {monthsOwed}mo owed</div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <h2 className="text-lg font-semibold mb-4">Your Positions</h2>
       {positions.length === 0 ? (
