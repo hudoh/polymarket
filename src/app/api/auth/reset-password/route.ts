@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { createHash } from 'crypto'
-
-function hashPassword(password: string): string {
-  return createHash('sha256').update(password + process.env.TOKEN_SECRET).digest('hex')
-}
+import { hashPassword } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
   const token = new URL(req.url).searchParams.get('token')
@@ -40,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     if (!reset) return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 })
 
-    const passwordHash = hashPassword(password)
+    const passwordHash = await hashPassword(password)
 
     await supabase.from('users').update({ password_hash: passwordHash }).eq('id', reset.user_id)
     await supabase.from('password_resets').update({ used: true }).eq('token', token)
